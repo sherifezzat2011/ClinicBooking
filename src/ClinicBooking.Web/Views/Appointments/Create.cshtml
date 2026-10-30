@@ -1,0 +1,91 @@
+@model CreateAppointmentViewModel
+@{
+    ViewData["Title"] = "New appointment";
+    var today = DateOnly.FromDateTime(DateTime.Today)
+        .ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h1 class="mb-2">New appointment</h1>
+        <p class="text-muted mb-4">Enter the patient's details and choose a doctor and visit date.</p>
+
+        @if (ViewData["DetailsReviewed"] is true)
+        {
+            <div class="alert alert-danger" role="status">
+                Details checked. An available time must be selected before the appointment can be booked.
+            </div>
+        }
+
+        @if (Model.Doctors.Count == 0)
+        {
+            <div class="alert alert-danger" role="status">No doctors are available for selection.</div>
+        }
+
+        <form asp-controller="Appointments" asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Patient details</h2>
+
+                    <div class="mb-3">
+                        <label asp-for="PatientName" class="form-label"></label>
+                        <input asp-for="PatientName" class="form-control" maxlength="150" autocomplete="name" />
+                        <span asp-validation-for="PatientName" class="text-danger"></span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="BirthDate" class="form-label"></label>
+                            <input asp-for="BirthDate" class="form-control" max="@today" autocomplete="bday" />
+                            <span asp-validation-for="BirthDate" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Phone" class="form-label"></label>
+                            <input asp-for="Phone" class="form-control" type="tel" maxlength="30" autocomplete="tel" />
+                            <span asp-validation-for="Phone" class="text-danger"></span>
+                            <div class="form-text">Optional</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Visit details</h2>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="DoctorId" class="form-label"></label>
+                            <select asp-for="DoctorId" asp-items="Model.Doctors" class="form-select">
+                                <option value="">Select a doctor</option>
+                            </select>
+                            <span asp-validation-for="DoctorId" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="AppointmentDate" class="form-label"></label>
+                            <input asp-for="AppointmentDate" class="form-control" min="@today" />
+                            <span asp-validation-for="AppointmentDate" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="appointment-time" class="form-label">Appointment time</label>
+                        <select id="appointment-time" class="form-select" disabled aria-describedby="visit-duration">
+                            <option>No appointment time selected</option>
+                        </select>
+                        <div id="visit-duration" class="form-text">Default visit length: 30 minutes.</div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Review details</button>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary ms-2">Back</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

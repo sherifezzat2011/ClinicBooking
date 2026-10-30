@@ -4,7 +4,7 @@ A clinic appointment booking application using ASP.NET Core MVC. Development fol
 
 ## Current stage
 
-US-01 establishes the MVC project structure. US-02 adds the five entities, EF Core mappings, SQL Server configuration, and the `InitialCreate` migration. US-03 adds repeatable, fictional development data for a clinic, two doctors, and their weekly working periods. Patient registration, doctor availability, booking behavior, and the appointments table will be delivered in subsequent stories.
+US-01 establishes the MVC project structure. US-02 adds the database model and migration. US-03 adds sample doctors and schedules. US-04 adds the secretary's booking form with patient details, doctor selection, and date validation. Available time slots, saving bookings, and the appointments table will be delivered in subsequent stories.
 
 ## Technology
 
@@ -30,6 +30,8 @@ dotnet run --project src/ClinicBooking.Web --launch-profile http
 Open http://localhost:5185. The migration creates the configured database and its schema. In Development, the database update command also seeds the sample data described below, even when there are no new migrations. Database migrations and seeding are not performed automatically at application startup.
 
 For local HTTPS, trust the development certificate using `dotnet dev-certs https --trust`, then run with `--launch-profile https` and open https://localhost:7173.
+
+Open **New appointment** from the navigation menu, or visit `/Appointments/Create`. The form loads doctors from the database and validates patient and visit details. **Review details** does not save a patient or an appointment yet; time selection is a placeholder for US-05 and saving belongs to US-06.
 
 ## Architecture
 
