@@ -4,7 +4,7 @@ A clinic appointment booking application using ASP.NET Core MVC. Development fol
 
 ## Current stage
 
-US-01 establishes the MVC project structure. US-02 adds the five entities, EF Core mappings, SQL Server configuration, and the `InitialCreate` migration. Patient registration, doctor availability, booking behavior, and the appointments table will be delivered in subsequent stories.
+US-01 establishes the MVC project structure. US-02 adds the five entities, EF Core mappings, SQL Server configuration, and the `InitialCreate` migration. US-03 adds repeatable, fictional development data for a clinic, two doctors, and their weekly working periods. Patient registration, doctor availability, booking behavior, and the appointments table will be delivered in subsequent stories.
 
 ## Technology
 
@@ -27,7 +27,7 @@ dotnet ef database update --project src/ClinicBooking.Web -- --environment Devel
 dotnet run --project src/ClinicBooking.Web --launch-profile http
 ```
 
-Open http://localhost:5185. The migration creates the `ClinicBooking` database and its schema. No sample records are seeded yet; seed data belongs to US-03. Database migrations are applied explicitly rather than automatically at application startup.
+Open http://localhost:5185. The migration creates the configured database and its schema. In Development, the database update command also seeds the sample data described below, even when there are no new migrations. Database migrations and seeding are not performed automatically at application startup.
 
 For local HTTPS, trust the development certificate using `dotnet dev-certs https --trust`, then run with `--launch-profile https` and open https://localhost:7173.
 
@@ -45,6 +45,7 @@ src/
       Configurations/        Relationships, column types, lengths, and constraints
       Migrations/            InitialCreate and model snapshot
       ApplicationDbContext.cs EF Core database session
+      DevelopmentDataSeeder.cs Fictional development data
     Services/                Scheduling and booking business rules
     ViewModels/              Input and display models for views
     Views/                   Razor views and shared layouts
@@ -55,6 +56,20 @@ src/
 Requests will flow through controllers to services, which use the EF Core DbContext. Views render view models. `ApplicationDbContext` is registered with dependency injection using SQL Server and the default scoped lifetime. Entity configurations are discovered through `ApplyConfigurationsFromAssembly`.
 
 The Services folder remains reserved for later booking logic. Empty folders contain `.gitkeep` files so the intended structure is visible in Git.
+
+## Development sample data
+
+`DevelopmentDataSeeder` adds the following sample data when running `dotnet ef database update` in Development:
+
+| Record | Sample values |
+| --- | --- |
+| Clinic | Demo Clinic; Fictional demo location |
+| Doctor | Dr. Ahmed; 16:00–20:00 every day except Friday (6 working periods) |
+| Doctor | Dr. Sara; 10:00–14:00 Sunday through Thursday (5 working periods) |
+
+All sample data is fictional; no patients or appointments are added. Existing records are matched by clinic and doctor names, and existing working weekdays are kept. Rerunning the command adds only missing records. Renaming a sample clinic or doctor causes a new sample record to be added.
+
+The configured connection string is used, including User Secrets overrides such as `ClinicBookingDev`. No new migration is needed because the schema has not changed. Seeding is disabled outside Development.
 
 ## Configuration
 

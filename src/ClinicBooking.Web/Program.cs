@@ -11,7 +11,15 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
         "Connection string 'DefaultConnection' is required. Configure ConnectionStrings__DefaultConnection for this environment.");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+{
+    options.UseSqlServer(connectionString);
+
+    if (builder.Environment.IsDevelopment())
+    {
+        options.UseSeeding((context, _) =>
+            DevelopmentDataSeeder.Seed((ApplicationDbContext)context));
+    }
+});
 
 var app = builder.Build();
 
