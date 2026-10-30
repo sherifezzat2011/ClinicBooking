@@ -29,7 +29,15 @@ public class CreateAppointmentViewModel : IValidatableObject
     [Display(Name = "Appointment date")]
     public DateOnly? AppointmentDate { get; set; }
 
+    [Required(ErrorMessage = "Select an available appointment time.")]
+    [Display(Name = "Appointment time")]
+    public TimeOnly? AppointmentTime { get; set; }
+
     public List<SelectListItem> Doctors { get; set; } = new();
+
+    public List<SelectListItem> AvailableTimes { get; set; } = new();
+
+    public string? AvailabilityMessage { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
