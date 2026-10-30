@@ -4,27 +4,30 @@ A clinic appointment booking application using ASP.NET Core MVC. Development fol
 
 ## Current stage
 
-US-01 establishes the project structure and a working home page. Patient registration, doctor availability, bookings, and the appointments table will be delivered in subsequent stories.
+US-01 establishes the MVC project structure. US-02 adds the five entities, EF Core mappings, SQL Server configuration, and the `InitialCreate` migration. Patient registration, doctor availability, booking behavior, and the appointments table will be delivered in subsequent stories.
 
 ## Technology
 
 - ASP.NET Core MVC on .NET 10 LTS
 - Razor views, Bootstrap, and JavaScript
-- Planned in US-02: Entity Framework Core 10, Code First, and SQL Server
+- Entity Framework Core 10.0.14, Code First, and SQL Server
+- SQL Server LocalDB for Windows development
 
 ## Run locally
 
-Install the .NET 10 SDK. `global.json` selects an installed stable .NET 10 SDK with feature-band roll-forward. Visual Studio is optional; use an IDE version that supports .NET 10 and `.slnx` solutions.
+Install the .NET 10 SDK and SQL Server Express LocalDB (instance `MSSQLLocalDB`). `global.json` selects an installed stable .NET 10 SDK with feature-band roll-forward. Visual Studio is optional; use an IDE version that supports .NET 10 and `.slnx` solutions. A separate SQL Server instance can be used by overriding the connection string.
 
 From the repository root:
 
 ```shell
 dotnet restore ClinicBooking.slnx
+dotnet tool restore
 dotnet build ClinicBooking.slnx --no-restore
+dotnet ef database update --project src/ClinicBooking.Web -- --environment Development
 dotnet run --project src/ClinicBooking.Web --launch-profile http
 ```
 
-Open http://localhost:5185. This stage does not require SQL Server or a connection string.
+Open http://localhost:5185. The migration creates the `ClinicBooking` database and its schema. No sample records are seeded yet; seed data belongs to US-03. Database migrations are applied explicitly rather than automatically at application startup.
 
 For local HTTPS, trust the development certificate using `dotnet dev-certs https --trust`, then run with `--launch-profile https` and open https://localhost:7173.
 
@@ -37,10 +40,11 @@ ClinicBooking.slnx
 src/
   ClinicBooking.Web/
     Controllers/             HTTP requests and responses
-    Entities/                Persistent domain entities (US-02)
+    Entities/                Clinic, Doctor, DoctorSchedule, Patient, Appointment
     Data/
-      Configurations/        EF Core entity mappings (US-02)
-      Migrations/            Versioned database changes (US-02)
+      Configurations/        Relationships, column types, lengths, and constraints
+      Migrations/            InitialCreate and model snapshot
+      ApplicationDbContext.cs EF Core database session
     Services/                Scheduling and booking business rules
     ViewModels/              Input and display models for views
     Views/                   Razor views and shared layouts
@@ -48,17 +52,43 @@ src/
     Program.cs               Dependency injection and request pipeline
 ```
 
-Requests will flow through controllers to services, which use the EF Core DbContext. Views render view models. Dependency injection and environment-specific configuration use ASP.NET Core's built-in facilities.
+Requests will flow through controllers to services, which use the EF Core DbContext. Views render view models. `ApplicationDbContext` is registered with dependency injection using SQL Server and the default scoped lifetime. Entity configurations are discovered through `ApplyConfigurationsFromAssembly`.
 
-Empty folders contain `.gitkeep` files so the intended structure is visible in Git. Entities and database code are deferred to US-02.
+The Services folder remains reserved for later booking logic. Empty folders contain `.gitkeep` files so the intended structure is visible in Git.
 
 ## Configuration
 
 - `appsettings.json` contains shared, non-sensitive settings.
-- `appsettings.Development.json` contains non-sensitive development overrides.
+- `appsettings.Development.json` contains the LocalDB connection string using Windows authentication, with no username or password.
 - Launch profiles set the local environment and ports.
-- Use environment variables or ASP.NET Core User Secrets for credentials when database configuration is introduced. Never commit passwords, real patient data, or development certificates.
+- Override `ConnectionStrings:DefaultConnection` using ASP.NET Core User Secrets or the `ConnectionStrings__DefaultConnection` environment variable. Never commit passwords, real patient data, or development certificates. User Secrets are enabled for the web project.
+- Non-development environments must provide their own connection string; the application reports a clear configuration error when it is missing.
 - `.gitignore` excludes build output, local tooling, and common secret files. Any ignored custom settings file must be explicitly loaded if used.
+
+## Database rules
+
+- Every entity has an integer identity primary key.
+- All four foreign keys are required, and referenced records cannot be deleted while dependents exist.
+- Names are required and limited to 150 characters; optional phone numbers to 30 characters; optional clinic addresses to 250 characters. Unicode text supports Arabic names.
+- Birth dates use SQL `date`; weekly start/end times use `time`; appointment date/times use `datetime2`.
+- Weekdays use `tinyint`: Sunday = 0 through Saturday = 6, enforced by a check constraint.
+- Schedule start time and appointment start date/time must precede their respective end values, enforced by check constraints.
+- Composite indexes support doctor/weekday schedule lookups and doctor/start-time appointment lookups. They are not uniqueness or overlap constraints.
+- Appointments are interpreted in the clinic's local time. A multi-time-zone deployment would require an explicit time-zone policy.
+- Rejecting blank names and future birth dates, defaulting visits to 30 minutes, checking working hours, and preventing overlapping or concurrent bookings belong to later validation and booking stories. Required SQL columns reject `NULL`, not empty text.
+
+## Verify the database
+
+With SQL Server command-line utilities installed, run the integration checks against the development database:
+
+```shell
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d ClinicBooking -b -i scripts/verify-database.sql
+dotnet ef migrations has-pending-model-changes --project src/ClinicBooking.Web -- --environment Development
+```
+
+The SQL script checks the five tables, four restricted foreign keys, three check constraints, lookup indexes, valid linked records, and 22 invalid operations. Fixture rows are rolled back, although SQL Server identity counters may advance. Use a disposable development database. It does not test booking overlap prevention, which is not implemented yet.
+
+The local `dotnet-ef` tool version is pinned in `dotnet-tools.json` so migration commands use the same EF version as the project.
 
 ## Delivery workflow
 
