@@ -1,0 +1,38 @@
+@model List<AppointmentListItemViewModel>
+@using System.Globalization
+
+@if (Model.Count == 0)
+{
+    <p class="text-muted mb-0">No appointments have been booked yet.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle mb-0">
+            <caption class="visually-hidden">Saved appointments ordered by date and start time.</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Booking #</th>
+                    <th scope="col">Patient</th>
+                    <th scope="col">Doctor</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Start time</th>
+                    <th scope="col">End time</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var appointment in Model)
+                {
+                    <tr>
+                        <th scope="row">@appointment.Id</th>
+                        <td>@appointment.PatientName</td>
+                        <td>@appointment.DoctorName</td>
+                        <td class="text-nowrap">@appointment.StartDateTime.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture)</td>
+                        <td class="text-nowrap">@appointment.StartDateTime.ToString("HH:mm", CultureInfo.InvariantCulture)</td>
+                        <td class="text-nowrap">@appointment.EndDateTime.ToString("HH:mm", CultureInfo.InvariantCulture)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
