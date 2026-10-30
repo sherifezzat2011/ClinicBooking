@@ -10,10 +10,10 @@
         <h1 class="mb-2">New appointment</h1>
         <p class="text-muted mb-4">Enter the patient's details and choose a doctor and visit date.</p>
 
-        @if (ViewData["DetailsReviewed"] is true)
+        @if (TempData["SuccessMessage"] is string successMessage)
         {
-            <div class="alert alert-danger" role="status">
-                Details checked. No appointment has been saved.
+            <div class="alert alert-success" role="status">
+                @successMessage
             </div>
         }
 
@@ -85,7 +85,7 @@
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary">Review details</button>
+            <button type="submit" class="btn btn-primary">Save appointment</button>
             <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary ms-2">Back</a>
         </form>
     </div>
