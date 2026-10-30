@@ -77,7 +77,7 @@ public class AppointmentsController : Controller
         if (result.Success)
         {
             TempData["SuccessMessage"] = $"Appointment #{result.AppointmentId} saved successfully.";
-            return RedirectToAction(nameof(Create));
+            return RedirectToAction(nameof(HomeController.Index), "Home");
         }
 
         ModelState.AddModelError(string.Empty, result.Message);
@@ -158,4 +158,5 @@ public class AppointmentsController : Controller
             })
             .ToList();
     }
+
 }
