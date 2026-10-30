@@ -77,9 +77,23 @@ The Services folder remains reserved for later booking logic. Empty folders cont
 | Doctor | Dr. Ahmed; 16:00–20:00 every day except Friday (6 working periods) |
 | Doctor | Dr. Sara; 10:00–14:00 Sunday through Thursday (5 working periods) |
 
-All sample data is fictional; no patients or appointments are added. Existing records are matched by clinic and doctor names, and existing working weekdays are kept. Rerunning the command adds only missing records. Renaming a sample clinic or doctor causes a new sample record to be added.
+This EF seeder adds doctors and schedules only. Existing records are matched by clinic and doctor names, and existing working weekdays are kept. Rerunning the command adds only missing records. Renaming a sample clinic or doctor causes a new sample record to be added.
 
 The configured connection string is used, including User Secrets overrides such as `ClinicBookingDev`. No new migration is needed because the schema has not changed. Seeding is disabled outside Development.
+
+### Optional demo patients and bookings
+
+After the Development database update, run `scripts/demo-data.sql` against the **same database as the application**:
+
+```shell
+sqlcmd -S "(localdb)\MSSQLLocalDB" -E -d ClinicBooking -b -i scripts/demo-data.sql
+```
+
+Replace `ClinicBooking` with your configured database name, for example `ClinicBookingDev` when using that User Secrets override. Alternatively, open the SQL file in Visual Studio or SQL Server Management Studio, select that database, and execute it. Refresh Home to see the rows.
+
+The script adds five fictional patients and up to five 30-minute appointments within the default working schedules, starting in the next week. Other slots remain free to try the form. Phone values `DEMO-001` through `DEMO-005` are fictional identifiers.
+
+Rerunning it keeps the original date range, reuses the sample patients, and skips occupied slots. It does not delete or update existing records. It uses the booking service's doctor locks and one transaction. If you changed the schedules or already booked some times, fewer rows may be added. The SQL file is optional demo data, not a database backup: reviewers first create the schema using EF migrations, then run this file locally. No real patient data or database files are included.
 
 ## Configuration
 
