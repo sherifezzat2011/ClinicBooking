@@ -12,11 +12,16 @@ public class AppointmentsController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly AppointmentAvailabilityService _availability;
+    private readonly AppointmentBookingService _booking;
 
-    public AppointmentsController(ApplicationDbContext context, AppointmentAvailabilityService availability)
+    public AppointmentsController(
+        ApplicationDbContext context,
+        AppointmentAvailabilityService availability,
+        AppointmentBookingService booking)
     {
         _context = context;
         _availability = availability;
+        _booking = booking;
     }
 
     [HttpGet]
@@ -65,7 +70,30 @@ public class AppointmentsController : Controller
             return View(model);
         }
 
-        ViewData["DetailsReviewed"] = true;
+        var result = _booking.Book(
+            model.PatientName, model.BirthDate!.Value, model.Phone,
+            model.DoctorId!.Value, model.AppointmentDate!.Value, model.AppointmentTime!.Value);
+
+        if (result.Success)
+        {
+            TempData["SuccessMessage"] = $"Appointment #{result.AppointmentId} saved successfully.";
+            return RedirectToAction(nameof(Create));
+        }
+
+        ModelState.AddModelError(string.Empty, result.Message);
+        model.AvailableTimes = GetTimeOptions(model.DoctorId.Value, model.AppointmentDate.Value);
+
+        if (!model.AvailableTimes.Any(option =>
+            TimeOnly.ParseExact(option.Value, "HH:mm", CultureInfo.InvariantCulture) == model.AppointmentTime.Value))
+        {
+            ModelState.Remove(nameof(model.AppointmentTime));
+            model.AppointmentTime = null;
+        }
+
+        if (model.AvailableTimes.Count == 0)
+        {
+            model.AvailabilityMessage = "No available time slots for the selected doctor and date.";
+        }
 
         return View(model);
     }
