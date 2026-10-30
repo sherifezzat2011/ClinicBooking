@@ -13,7 +13,7 @@
         @if (ViewData["DetailsReviewed"] is true)
         {
             <div class="alert alert-danger" role="status">
-                Details checked. An available time must be selected before the appointment can be booked.
+                Details checked. No appointment has been saved.
             </div>
         }
 
@@ -71,11 +71,16 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="appointment-time" class="form-label">Appointment time</label>
-                        <select id="appointment-time" class="form-select" disabled aria-describedby="visit-duration">
-                            <option>No appointment time selected</option>
+                        <label asp-for="AppointmentTime" class="form-label"></label>
+                        <select asp-for="AppointmentTime" asp-items="Model.AvailableTimes" class="form-select"
+                                disabled="@(Model.AvailableTimes.Count == 0)" aria-describedby="visit-duration"
+                                data-slots-url="@Url.Action("AvailableSlots", "Appointments")">
+                            <option value="">Select an available time</option>
                         </select>
+                        <span asp-validation-for="AppointmentTime" class="text-danger"></span>
                         <div id="visit-duration" class="form-text">Default visit length: 30 minutes.</div>
+                        <div id="availability-message" class="alert alert-danger mt-3 mb-0" role="status"
+                             hidden="@(string.IsNullOrEmpty(Model.AvailabilityMessage))">@Model.AvailabilityMessage</div>
                     </div>
                 </div>
             </div>
@@ -88,4 +93,5 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/appointment-form.js" asp-append-version="true"></script>
 }

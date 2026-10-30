@@ -4,7 +4,7 @@ A clinic appointment booking application using ASP.NET Core MVC. Development fol
 
 ## Current stage
 
-US-01 establishes the MVC project structure. US-02 adds the database model and migration. US-03 adds sample doctors and schedules. US-04 adds the secretary's booking form with patient details, doctor selection, and date validation. Available time slots, saving bookings, and the appointments table will be delivered in subsequent stories.
+US-01 establishes the MVC project structure. US-02 adds the database model and migration. US-03 adds sample doctors and schedules. US-04 adds the secretary's booking form. US-05 displays available 30-minute appointment slots for the selected doctor and date. Saving bookings and the appointments table will be delivered in subsequent stories.
 
 ## Technology
 
@@ -31,7 +31,9 @@ Open http://localhost:5185. The migration creates the configured database and it
 
 For local HTTPS, trust the development certificate using `dotnet dev-certs https --trust`, then run with `--launch-profile https` and open https://localhost:7173.
 
-Open **New appointment** from the navigation menu, or visit `/Appointments/Create`. The form loads doctors from the database and validates patient and visit details. **Review details** does not save a patient or an appointment yet; time selection is a placeholder for US-05 and saving belongs to US-06.
+Open **New appointment** from the navigation menu, or visit `/Appointments/Create`. Choose a doctor and date to load available 30-minute slots. Changing either selection clears the previously selected time. Red alerts explain non-working or fully booked days and loading errors. **Review details** validates the form and rechecks the selected time but does not save a patient or appointment; saving belongs to US-06.
+
+`AppointmentAvailabilityService` generates complete slots within each working period, excludes overlapping appointments and slots that have already started, and returns distinct times in order. Adjacent appointments are allowed. The JavaScript form ignores outdated responses when selections change quickly. All dates and times use the clinic server's local time zone; configure it for the clinic location. C# database operations remain synchronous.
 
 ## Architecture
 
@@ -92,7 +94,7 @@ The configured connection string is used, including User Secrets overrides such 
 - Schedule start time and appointment start date/time must precede their respective end values, enforced by check constraints.
 - Composite indexes support doctor/weekday schedule lookups and doctor/start-time appointment lookups. They are not uniqueness or overlap constraints.
 - Appointments are interpreted in the clinic's local time. A multi-time-zone deployment would require an explicit time-zone policy.
-- Rejecting blank names and future birth dates, defaulting visits to 30 minutes, checking working hours, and preventing overlapping or concurrent bookings belong to later validation and booking stories. Required SQL columns reject `NULL`, not empty text.
+- The form rejects blank names, future birth dates, past appointment dates, and unavailable selected times. Available visits default to 30 minutes and fit within working hours. Saving and preventing concurrent booking conflicts belong to US-06. Required SQL columns reject `NULL`, not empty text.
 
 ## Verify the database
 

@@ -1,5 +1,7 @@
 using ClinicBooking.Web.Data;
+using ClinicBooking.Web.Services;
 using ClinicBooking.Web.ViewModels;
+using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -9,10 +11,12 @@ namespace ClinicBooking.Web.Controllers;
 public class AppointmentsController : Controller
 {
     private readonly ApplicationDbContext _context;
+    private readonly AppointmentAvailabilityService _availability;
 
-    public AppointmentsController(ApplicationDbContext context)
+    public AppointmentsController(ApplicationDbContext context, AppointmentAvailabilityService availability)
     {
         _context = context;
+        _availability = availability;
     }
 
     [HttpGet]
@@ -30,7 +34,7 @@ public class AppointmentsController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     public IActionResult Create(
-        [Bind("PatientName,BirthDate,Phone,DoctorId,AppointmentDate")] CreateAppointmentViewModel model)
+        [Bind("PatientName,BirthDate,Phone,DoctorId,AppointmentDate,AppointmentTime")] CreateAppointmentViewModel model)
     {
         if (model.DoctorId.HasValue && !_context.Doctors.Any(doctor => doctor.Id == model.DoctorId.Value))
         {
@@ -38,6 +42,23 @@ public class AppointmentsController : Controller
         }
 
         model.Doctors = GetDoctors();
+
+        if (model.DoctorId.HasValue && model.AppointmentDate.HasValue
+            && !HasFieldError(nameof(model.DoctorId)) && !HasFieldError(nameof(model.AppointmentDate)))
+        {
+            model.AvailableTimes = GetTimeOptions(model.DoctorId.Value, model.AppointmentDate.Value);
+            if (model.AvailableTimes.Count == 0)
+            {
+                model.AvailabilityMessage = "No available time slots for the selected doctor and date.";
+            }
+
+            if (model.AppointmentTime.HasValue && !model.AvailableTimes.Any(option =>
+                TimeOnly.ParseExact(option.Value, "HH:mm", CultureInfo.InvariantCulture) == model.AppointmentTime.Value))
+            {
+                ModelState.AddModelError(nameof(model.AppointmentTime),
+                    "The selected time is no longer available. Select another time.");
+            }
+        }
 
         if (!ModelState.IsValid)
         {
@@ -47,6 +68,54 @@ public class AppointmentsController : Controller
         ViewData["DetailsReviewed"] = true;
 
         return View(model);
+    }
+
+    [HttpGet]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    public IActionResult AvailableSlots(int? doctorId, DateOnly? date)
+    {
+        if (!ModelState.IsValid || !doctorId.HasValue || doctorId.Value <= 0 || !date.HasValue)
+        {
+            return BadRequest(new { message = "Select a valid doctor and appointment date." });
+        }
+
+        if (date.Value < DateOnly.FromDateTime(DateTime.Today))
+        {
+            return BadRequest(new { message = "Appointment date cannot be in the past." });
+        }
+
+        if (!_context.Doctors.Any(doctor => doctor.Id == doctorId.Value))
+        {
+            return NotFound(new { message = "The selected doctor is not available." });
+        }
+
+        var slots = GetTimeOptions(doctorId.Value, date.Value);
+        return Json(new
+        {
+            slots = slots.Select(slot => new { value = slot.Value, text = slot.Text }),
+            message = slots.Count == 0
+                ? "No available time slots for the selected doctor and date."
+                : string.Empty
+        });
+    }
+
+    private bool HasFieldError(string field)
+    {
+        return ModelState.TryGetValue(field, out var entry) && entry.Errors.Count > 0;
+    }
+
+    private List<SelectListItem> GetTimeOptions(int doctorId, DateOnly date)
+    {
+        return _availability.GetAvailableSlots(doctorId, date)
+            .Select(time =>
+            {
+                var start = time.ToString("HH:mm", CultureInfo.InvariantCulture);
+                var end = time.AddMinutes(AppointmentAvailabilityService.VisitLengthMinutes)
+                    .ToString("HH:mm", CultureInfo.InvariantCulture);
+
+                return new SelectListItem { Value = start, Text = $"{start} - {end}" };
+            })
+            .ToList();
     }
 
     private List<SelectListItem> GetDoctors()
