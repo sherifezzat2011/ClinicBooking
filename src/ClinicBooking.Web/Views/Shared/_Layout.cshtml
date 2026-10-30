@@ -1,45 +1,54 @@
-﻿<!DOCTYPE html>
+@{
+    var isHome = ViewContext.RouteData.Values["controller"]?.ToString() == "Home";
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#176f63" />
     <title>@ViewData["Title"] - Clinic Booking</title>
+    <link rel="icon" type="image/svg+xml" href="~/images/clinic-mark.svg" />
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/ClinicBooking.Web.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Clinic Booking</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-navigation" aria-controls="main-navigation"
-                        aria-expanded="false" aria-label="Toggle navigation">
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <header class="site-header">
+        <nav class="navbar navbar-expand-md" aria-label="Main navigation">
+            <div class="container clinic-container">
+                <a class="navbar-brand clinic-brand" asp-controller="Home" asp-action="Index">
+                    <span class="brand-mark"><partial name="_ClinicMark" /></span>
+                    <span><strong>Clinic Booking</strong><small>PATIENT APPOINTMENTS</small></span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-navigation"
+                        aria-controls="main-navigation" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div id="main-navigation" class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+                <div id="main-navigation" class="collapse navbar-collapse">
+                    <ul class="navbar-nav clinic-navigation ms-auto">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link @(isHome ? "active" : "")" aria-current="@(isHome ? "page" : null)"
+                               asp-controller="Home" asp-action="Index">Home</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Appointments" asp-action="Create">New appointment</a>
+                            <a class="nav-link @(!isHome ? "active" : "")" aria-current="@(!isHome ? "page" : null)"
+                               asp-controller="Appointments" asp-action="Create">New appointment</a>
                         </li>
                     </ul>
+                    <span class="reception-label"><span aria-hidden="true">+</span> Clinic reception</span>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; @DateTime.UtcNow.Year - Clinic Booking
+    <main id="main-content" class="container clinic-container page-content">
+        @RenderBody()
+    </main>
+    <footer class="site-footer">
+        <div class="container clinic-container footer-content">
+            <span>&copy; @DateTime.UtcNow.Year Clinic Booking</span>
+            <span class="footer-note"><span aria-hidden="true">+</span> Your next visit, organised.</span>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

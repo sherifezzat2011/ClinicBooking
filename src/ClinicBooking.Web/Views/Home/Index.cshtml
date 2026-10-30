@@ -1,24 +1,42 @@
 @model List<AppointmentListItemViewModel>
+@using System.Globalization
 @{
-    ViewData["Title"] = "Home";
+    ViewData["Title"] = "Appointments";
+    var todayCount = Model.Count(appointment => appointment.StartDateTime.Date == DateTime.Today);
 }
-
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-    <div>
-        <h1>Clinic Booking</h1>
-        <p class="text-muted mb-0">Manage patient appointments.</p>
-    </div>
-    <a asp-controller="Appointments" asp-action="Create" class="btn btn-primary">New appointment</a>
-</div>
 
 @if (TempData["SuccessMessage"] is string successMessage)
 {
     <div class="alert alert-success" role="status">@successMessage</div>
 }
 
-<section class="card mb-4" aria-labelledby="appointments-heading">
-    <div class="card-body">
-        <h2 id="appointments-heading" class="h4 mb-3">Saved appointments</h2>
+<section class="clinic-hero" aria-labelledby="welcome-heading">
+    <div class="hero-copy">
+        <span class="eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span> A WARM WELCOME</span>
+        <h1 id="welcome-heading">A calmer start<br />to every visit.</h1>
+        <p>Good care starts with a little planning. Arrange a visit with your doctor and keep every appointment in one place.</p>
+        <div class="hero-actions">
+            <a asp-controller="Appointments" asp-action="Create" class="btn btn-primary"><span aria-hidden="true">+</span> New appointment</a>
+            <a href="#appointments-heading" class="hero-link">View appointments <span aria-hidden="true">&#8599;</span></a>
+        </div>
+        <div class="hero-stats" aria-label="Appointment summary">
+            <div><strong>@Model.Count</strong><span>Total appointments</span></div>
+            <div><strong>@todayCount</strong><span>Scheduled today</span></div>
+        </div>
+    </div>
+    <div class="hero-scene">
+        <img src="~/images/clinic-room.svg" alt="An illustrated clinic reception with comfortable seating, a reception desk and plants." fetchpriority="high" />
+        <div class="scene-caption"><span class="scene-cross" aria-hidden="true">+</span><div><strong>A space for better care</strong><span>One appointment at a time.</span></div></div>
+    </div>
+</section>
+
+<section class="schedule-section" aria-labelledby="appointments-heading">
+    <div class="section-heading">
+        <div><span class="eyebrow">YOUR CLINIC SCHEDULE</span><h2 id="appointments-heading">Appointment overview</h2></div>
+        <span class="schedule-date">@DateTime.Today.ToString("dddd, dd MMMM", CultureInfo.InvariantCulture)</span>
+    </div>
+    <div class="schedule-card">
+        <div class="schedule-toolbar"><span class="schedule-label"><span aria-hidden="true"></span> All appointments</span><span class="count-badge">@Model.Count @(Model.Count == 1 ? "appointment" : "appointments")</span></div>
         <partial name="_AppointmentsGrid" model="Model" />
     </div>
 </section>
